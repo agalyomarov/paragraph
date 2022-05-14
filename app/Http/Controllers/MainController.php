@@ -103,7 +103,7 @@ class MainController extends Controller
             if (!$post) {
                 return response()->json(['status' => false, 'messages' => 'Url not found']);
             }
-            if ($post->uuid != session('uuid_user') || session('isAdmin') != true) {
+            if ($post->uuid != session('uuid_user') && session('isAdmin') != true) {
                 return response()->json(['status' => false]);
             }
             $rules = [
