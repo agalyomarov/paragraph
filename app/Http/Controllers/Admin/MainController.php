@@ -26,4 +26,12 @@ class MainController extends Controller
             return response()->json(['status' => false]);
         }
     }
+    public function auth(Request $request)
+    {
+        if ($request->email == env('FOR_ADMIN_EMAIL') && $request->password == env('FOR_ADMIN_PASSWORD')) {
+            session(['isAdmin' => true]);
+            return redirect()->route('admin.index');
+        }
+        return redirect()->back();
+    }
 }
