@@ -465,8 +465,8 @@
             </div>
             <div class="btns">
                 <input type="file" class="select_image">
-                <img src="{{ asset('icons/link.png') }}" alt="" class="link">
-                <img src="{{ asset('icons/image.png') }}" alt="" class="image">
+                <img src="{{ asset('link.png') }}" alt="" class="link">
+                <img src="{{ asset('image.png') }}" alt="" class="image">
             </div>
             <div contenteditable="true" class="story">
             </div>
@@ -618,7 +618,7 @@
             let formData = new FormData();
             const title = document.querySelector('.content .title').textContent
             const author = document.querySelector('.content .author').textContent;
-            const story = document.querySelector('.content .story').textContent;
+            const story = document.querySelector('.content .story').innerHTML;
             const mediaMaterials = [];
             document.querySelectorAll('.content .media .block_media').forEach(function(element) {
                 const media = {};
@@ -633,6 +633,7 @@
                     media.mediaContent = element.querySelector('.video_content').textContent.trim();
                     media.mediaWebSite = element.querySelector('.video').dataset.video_website;
                 }
+                console.log(media);
                 mediaMaterials.push(media);
             });
             const body = {};

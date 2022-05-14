@@ -502,10 +502,10 @@
             </div>
             <div class="btns hidden">
                 <input type="file" class="select_image">
-                <img src="{{ asset('icons/link.png') }}" alt="" class="link">
-                <img src="{{ asset('icons/image.png') }}" alt="" class="image">
+                <img src="{{ asset('link.png') }}" alt="" class="link">
+                <img src="{{ asset('image.png') }}" alt="" class="image">
             </div>
-            <div class="story hidden_after">{{ $post->story }}</div>
+            <div class="story hidden_after">{!! $post->story !!}</div>
         </div>
 
         <div class="sidebar">
