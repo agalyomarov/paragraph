@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-    <title>Document</title>
+    <title>panagraph.guru</title>
     <style>
         *,
         *::before,
@@ -507,139 +507,143 @@
             </div>
             <div class="story hidden_after">{{ $post->story }}</div>
         </div>
+
         <div class="sidebar">
             {{-- <div class="author">Agaly</div> --}}
-            <div class="btn_publish" data-status="disabled">Редактировать</div>
+            @if ($isAuthor)
+                <div class="btn_publish" data-status="disabled">Редактировать</div>
+            @endif
         </div>
     </div>
-    <script>
-        document.querySelector('.wrapper .sidebar .btn_publish').addEventListener('click', function(e) {
-            if (e.target.dataset.status == 'disabled') {
-                e.target.textContent = 'Опубликовать';
-                e.target.dataset.status = 'enabled';
-                const content = document.querySelector('.wrapper .content');
-                const sidebar = document.querySelector('.wrapper .sidebar');
-                content.querySelector('.media').dataset.status = 'enanled';
-                content.querySelector('.title').setAttribute('contenteditable', 'true');
-                content.querySelector('.author').setAttribute('contenteditable', 'true');
-                content.querySelector('.story').setAttribute('contenteditable', 'true');
-                content.querySelector('.media ').querySelectorAll('span.hidden').forEach(function(element) {
-                    if (element.closest('.block_image')) {
-                        element.closest('.block_image').querySelector('.image_content').setAttribute('contenteditable', 'true');
-                    };
-                    if (element.closest('.block_video')) {
-                        element.closest('.block_video').querySelector('.video_content').setAttribute('contenteditable', 'true');
-                    }
-                    element.classList.remove('hidden');
-                });
-                content.querySelector('.btns').classList.remove('hidden');
-            } else if (e.target.dataset.status == 'enabled') {
-                let formData = new FormData();
-                const title = document.querySelector('.content .title').textContent;
-                const url = document.querySelector('.content .title').dataset.url;
-                const author = document.querySelector('.content .author').textContent;
-                const story = document.querySelector('.content .story').textContent;
-                const mediaMaterials = [];
-                document.querySelectorAll('.content .media .block_media').forEach(function(element) {
-                    const media = {};
-                    media.blockCount = element.dataset.block_media_count;
-                    if (element.classList.contains('block_image')) {
-                        media.mediaType = 'image';
-                        media.mediaValue = element.querySelector('img').src;
-                        media.mediaData = element.dataset.image;
-                        media.mediaContent = element.querySelector('.image_content').textContent.trim();
-                    } else if (element.classList.contains('block_video')) {
-                        media.mediaType = 'video';
-                        media.mediaValue = element.querySelector('.video').dataset.src;
-                        media.mediaContent = element.querySelector('.video_content').textContent.trim();
-                        media.mediaWebSite = element.querySelector('.video').dataset.video_website;
-                    }
-                    mediaMaterials.push(media);
-                });
-                const body = {};
-                body['title'] = title;
-                body['author'] = author;
-                body['story'] = story.trim();
-                body['mediaMaterials'] = mediaMaterials;
-                fetch(`/${url}`, {
-                    method: 'put',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify(body)
-                }).then(res => {
-                    return res.json();
-                }).then(data => {
-                    if (data.status == 'validate_error') {
-                        if (document.querySelector('.wrapper .sidebar .errors')) {
-                            document.querySelector('.wrapper .sidebar .errors').remove();
+    @if ($isAuthor)
+        <script>
+            document.querySelector('.wrapper .sidebar .btn_publish').addEventListener('click', function(e) {
+                if (e.target.dataset.status == 'disabled') {
+                    e.target.textContent = 'Опубликовать';
+                    e.target.dataset.status = 'enabled';
+                    const content = document.querySelector('.wrapper .content');
+                    const sidebar = document.querySelector('.wrapper .sidebar');
+                    content.querySelector('.media').dataset.status = 'enanled';
+                    content.querySelector('.title').setAttribute('contenteditable', 'true');
+                    content.querySelector('.author').setAttribute('contenteditable', 'true');
+                    content.querySelector('.story').setAttribute('contenteditable', 'true');
+                    content.querySelector('.media ').querySelectorAll('span.hidden').forEach(function(element) {
+                        if (element.closest('.block_image')) {
+                            element.closest('.block_image').querySelector('.image_content').setAttribute('contenteditable', 'true');
+                        };
+                        if (element.closest('.block_video')) {
+                            element.closest('.block_video').querySelector('.video_content').setAttribute('contenteditable', 'true');
                         }
-                        document.querySelector('.wrapper .sidebar').insertAdjacentHTML('beforeend', `<div class="errors">${data.messages[0]}</div>`);
-                        setTimeout(() => {
-                            document.querySelector('.wrapper .sidebar .errors').style.opacity = 0;
-                        }, 2000);
-                    } else if (data.status == true) {
-                        window.location.reload();
-                        // console.log(data);
-                    } else {
-                        window.location.reload();
-                        // window.location = `/${data.message.url}`;
-                        // console.log(data);
-                    }
-                })
-            }
-        })
-        document.querySelector('.content .title').addEventListener('input', function(e) {
-            e.target.classList.remove('hidden_after');
-            if (e.target.textContent.length > 0) {
-                e.target.classList.add('hidden_after');
-            }
-            if (window.getComputedStyle(e.target).height != '34px') {
-                e.target.classList.add('hidden_after');
-            }
-        });
-
-        document.querySelector('.content .author').addEventListener('input', function(e) {
-            e.target.classList.remove('hidden_after');
-            if (e.target.textContent.length > 0) {
-                e.target.classList.add('hidden_after');
-            }
-            if (window.getComputedStyle(e.target).height != '18px') {
-                e.target.classList.add('hidden_after');
-            }
-        });
-
-
-        document.querySelector('.content .story').addEventListener('input', function(e) {
-            e.target.classList.remove('hidden_after');
-            if (e.target.textContent.length > 0) {
-                e.target.classList.add('hidden_after');
-            }
-            // console.log(parseInt(window.getComputedStyle(e.target).height));
-            if (parseInt(window.getComputedStyle(e.target).height) > '129') {
-                e.target.classList.add('hidden_after');
-            }
-        });
-
-
-        document.querySelector('.content .btns .image').addEventListener('click', function(e) {
-            const selectImage = document.querySelector('.content .btns input.select_image');
-            selectImage.click();
-            // console.log(e.target);
-        });
-        document.querySelector('.content .btns input.select_image').addEventListener('change', (event) => {
-            if (document.querySelector('.content .media .video_link')) {
-                if (document.querySelector('.content .media .video_link').value.trim().length == 0) {
-                    document.querySelector('.content .media .video_link').remove();
+                        element.classList.remove('hidden');
+                    });
+                    content.querySelector('.btns').classList.remove('hidden');
+                } else if (e.target.dataset.status == 'enabled') {
+                    let formData = new FormData();
+                    const title = document.querySelector('.content .title').textContent;
+                    const url = document.querySelector('.content .title').dataset.url;
+                    const author = document.querySelector('.content .author').textContent;
+                    const story = document.querySelector('.content .story').textContent;
+                    const mediaMaterials = [];
+                    document.querySelectorAll('.content .media .block_media').forEach(function(element) {
+                        const media = {};
+                        media.blockCount = element.dataset.block_media_count;
+                        if (element.classList.contains('block_image')) {
+                            media.mediaType = 'image';
+                            media.mediaValue = element.querySelector('img').src;
+                            media.mediaData = element.dataset.image;
+                            media.mediaContent = element.querySelector('.image_content').textContent.trim();
+                        } else if (element.classList.contains('block_video')) {
+                            media.mediaType = 'video';
+                            media.mediaValue = element.querySelector('.video').dataset.src;
+                            media.mediaContent = element.querySelector('.video_content').textContent.trim();
+                            media.mediaWebSite = element.querySelector('.video').dataset.video_website;
+                        }
+                        mediaMaterials.push(media);
+                    });
+                    const body = {};
+                    body['title'] = title;
+                    body['author'] = author;
+                    body['story'] = story.trim();
+                    body['mediaMaterials'] = mediaMaterials;
+                    fetch(`/${url}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify(body)
+                    }).then(res => {
+                        return res.json();
+                    }).then(data => {
+                        if (data.status == 'validate_error') {
+                            if (document.querySelector('.wrapper .sidebar .errors')) {
+                                document.querySelector('.wrapper .sidebar .errors').remove();
+                            }
+                            document.querySelector('.wrapper .sidebar').insertAdjacentHTML('beforeend', `<div class="errors">${data.messages[0]}</div>`);
+                            setTimeout(() => {
+                                document.querySelector('.wrapper .sidebar .errors').style.opacity = 0;
+                            }, 2000);
+                        } else if (data.status == true) {
+                            window.location.reload();
+                            // console.log(data);
+                        } else {
+                            window.location.reload();
+                            // window.location = `/${data.message.url}`;
+                            // console.log(data);
+                        }
+                    })
                 }
-            }
-            const blockMedia = document.querySelector('.content .media');
-            const blockMediaCount = document.querySelectorAll('.content .media .block_media').length + 1;
-            let input = event.target;
-            let reader = new FileReader();
-            reader.onload = function() {
-                blockMedia.insertAdjacentHTML('beforeend', `
+            })
+            document.querySelector('.content .title').addEventListener('input', function(e) {
+                e.target.classList.remove('hidden_after');
+                if (e.target.textContent.length > 0) {
+                    e.target.classList.add('hidden_after');
+                }
+                if (window.getComputedStyle(e.target).height != '34px') {
+                    e.target.classList.add('hidden_after');
+                }
+            });
+
+            document.querySelector('.content .author').addEventListener('input', function(e) {
+                e.target.classList.remove('hidden_after');
+                if (e.target.textContent.length > 0) {
+                    e.target.classList.add('hidden_after');
+                }
+                if (window.getComputedStyle(e.target).height != '18px') {
+                    e.target.classList.add('hidden_after');
+                }
+            });
+
+
+            document.querySelector('.content .story').addEventListener('input', function(e) {
+                e.target.classList.remove('hidden_after');
+                if (e.target.textContent.length > 0) {
+                    e.target.classList.add('hidden_after');
+                }
+                // console.log(parseInt(window.getComputedStyle(e.target).height));
+                if (parseInt(window.getComputedStyle(e.target).height) > '129') {
+                    e.target.classList.add('hidden_after');
+                }
+            });
+
+
+            document.querySelector('.content .btns .image').addEventListener('click', function(e) {
+                const selectImage = document.querySelector('.content .btns input.select_image');
+                selectImage.click();
+                // console.log(e.target);
+            });
+            document.querySelector('.content .btns input.select_image').addEventListener('change', (event) => {
+                if (document.querySelector('.content .media .video_link')) {
+                    if (document.querySelector('.content .media .video_link').value.trim().length == 0) {
+                        document.querySelector('.content .media .video_link').remove();
+                    }
+                }
+                const blockMedia = document.querySelector('.content .media');
+                const blockMediaCount = document.querySelectorAll('.content .media .block_media').length + 1;
+                let input = event.target;
+                let reader = new FileReader();
+                reader.onload = function() {
+                    blockMedia.insertAdjacentHTML('beforeend', `
             <div class="block_media block_image" data-block_media_count="${blockMediaCount}" data-image="base64">
                 <div class="img">
                     <img src="" alt="">
@@ -648,59 +652,59 @@
                 <div class="image_content" contenteditable="true">
                 </div>
                 </div>`);
-                const blocks_images = blockMedia.querySelectorAll('.block_image');
-                blocks_images[blocks_images.length - 1].querySelector('.img img').src = reader.result;
-            };
-            reader.readAsDataURL(input.files[0]);
-        });
+                    const blocks_images = blockMedia.querySelectorAll('.block_image');
+                    blocks_images[blocks_images.length - 1].querySelector('.img img').src = reader.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            });
 
 
-        document.querySelector('.content .media').addEventListener('click', function(e) {
-            if (e.target.classList.contains('image_content') && this.dataset.status != 'disabled') {
-                e.target.classList.add('hidden_after');
-                e.target.addEventListener('blur', function(event) {
-                    if (event.target.textContent.trim().length == 0) {
-                        event.target.innerHTML = '';
-                        event.target.classList.remove('hidden_after');
-                    }
-                })
-            }
-            if (e.target.classList.contains('video_content') && this.dataset.status != 'disabled') {
-                e.target.classList.add('hidden_after');
-                e.target.addEventListener('blur', function(event) {
-                    if (event.target.textContent.trim().length == 0) {
-                        event.target.innerHTML = '';
-                        event.target.classList.remove('hidden_after');
-                    }
-                })
-            }
-            if (e.target.classList.contains('delete_block_image')) {
-                e.target.closest('.block_image').remove();
-            }
-            if (e.target.classList.contains('delete_block_video')) {
-                e.target.closest('.block_video').remove();
-            }
-        })
+            document.querySelector('.content .media').addEventListener('click', function(e) {
+                if (e.target.classList.contains('image_content') && this.dataset.status != 'disabled') {
+                    e.target.classList.add('hidden_after');
+                    e.target.addEventListener('blur', function(event) {
+                        if (event.target.textContent.trim().length == 0) {
+                            event.target.innerHTML = '';
+                            event.target.classList.remove('hidden_after');
+                        }
+                    })
+                }
+                if (e.target.classList.contains('video_content') && this.dataset.status != 'disabled') {
+                    e.target.classList.add('hidden_after');
+                    e.target.addEventListener('blur', function(event) {
+                        if (event.target.textContent.trim().length == 0) {
+                            event.target.innerHTML = '';
+                            event.target.classList.remove('hidden_after');
+                        }
+                    })
+                }
+                if (e.target.classList.contains('delete_block_image')) {
+                    e.target.closest('.block_image').remove();
+                }
+                if (e.target.classList.contains('delete_block_video')) {
+                    e.target.closest('.block_video').remove();
+                }
+            })
 
 
-        document.querySelector('.content .btns .link').addEventListener('click', function(event_event) {
-            const media_block = document.querySelector('.content .media');
-            if (!document.querySelector('.content .media .video_link')) {
-                media_block.insertAdjacentHTML('beforeend', `<input type="text" class="video_link" placeholder="Paste a YouTube, Vimeo or Rutube link, and press Enter">`);
-                document.querySelector('.content .media .video_link').focus();
-            }
-            const input_video_link = document.querySelector('.content .media .video_link');
-            input_video_link.addEventListener('keypress', function(event) {
-                const blockMediaCount = document.querySelectorAll('.content .media .block_media').length + 1;
-                if (event.key === 'Enter') {
-                    if (event.target.value.trim().length == 0) {
-                        input_video_link.remove();
-                    } else {
-                        const link_video = event.target.value.trim();
-                        if (link_video.includes('youtube')) {
-                            const splits = link_video.split("=");
+            document.querySelector('.content .btns .link').addEventListener('click', function(event_event) {
+                const media_block = document.querySelector('.content .media');
+                if (!document.querySelector('.content .media .video_link')) {
+                    media_block.insertAdjacentHTML('beforeend', `<input type="text" class="video_link" placeholder="Paste a YouTube, Vimeo or Rutube link, and press Enter">`);
+                    document.querySelector('.content .media .video_link').focus();
+                }
+                const input_video_link = document.querySelector('.content .media .video_link');
+                input_video_link.addEventListener('keypress', function(event) {
+                    const blockMediaCount = document.querySelectorAll('.content .media .block_media').length + 1;
+                    if (event.key === 'Enter') {
+                        if (event.target.value.trim().length == 0) {
                             input_video_link.remove();
-                            media_block.insertAdjacentHTML('beforeend', `<div class="block_media block_video" data-block_media_count="${blockMediaCount}">
+                        } else {
+                            const link_video = event.target.value.trim();
+                            if (link_video.includes('youtube')) {
+                                const splits = link_video.split("=");
+                                input_video_link.remove();
+                                media_block.insertAdjacentHTML('beforeend', `<div class="block_media block_video" data-block_media_count="${blockMediaCount}">
                                               <div class="video" data-video_website="youtube" data-src="https://www.youtube.com/embed/${splits[1]}">
                                                   <iframe width="100%" height="300" src="https://www.youtube.com/embed/${splits[1]}"  frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                                                   <span class="delete_block_video">&#10005;</span>
@@ -708,10 +712,10 @@
                                               <div class="video_content" contenteditable="true">
                                               </div>
                                               </div>`);
-                        } else if (link_video.includes('vimeo')) {
-                            const splits = link_video.split("/");
-                            input_video_link.remove();
-                            media_block.insertAdjacentHTML('beforeend', `<div class="block_media block_video" data-block_media_count="${blockMediaCount}">
+                            } else if (link_video.includes('vimeo')) {
+                                const splits = link_video.split("/");
+                                input_video_link.remove();
+                                media_block.insertAdjacentHTML('beforeend', `<div class="block_media block_video" data-block_media_count="${blockMediaCount}">
                                               <div class="video" data-video_website="vimeo" data-src="https://player.vimeo.com/video/${splits[splits.length - 1]}">
                                               <iframe src="https://player.vimeo.com/video/${splits[splits.length - 1]}" width="100%" height="300" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
                                               <span class="delete_block_video">&#10005;</span>
@@ -719,10 +723,10 @@
                                               <div class="video_content" contenteditable="true">
                                               </div>
                                               </div>`);
-                        } else if (link_video.includes('rutube')) {
-                            const splits = link_video.split("/");
-                            input_video_link.remove();
-                            media_block.insertAdjacentHTML('beforeend', `<div class="block_media block_video" data-block_media_count="${blockMediaCount}">
+                            } else if (link_video.includes('rutube')) {
+                                const splits = link_video.split("/");
+                                input_video_link.remove();
+                                media_block.insertAdjacentHTML('beforeend', `<div class="block_media block_video" data-block_media_count="${blockMediaCount}">
                                               <div class="video" data-video_website="rutube" data-src="https://rutube.ru/pl/?pl_id&pl_type&pl_video=${splits[splits.length - 2]}">
                                               <iframe width="100%" height="300" src="https://rutube.ru/pl/?pl_id&pl_type&pl_video=${splits[splits.length - 2]}" frameborder="0" allow="clipboard-write" webkitAllowFullScreen mozallowfullscreen allowfullscreen></iframe>
                                               <span class="delete_block_video">&#10005;</span>
@@ -730,65 +734,15 @@
                                               <div class="video_content" contenteditable="true">
                                               </div>
                                               </div>`);
-                            // console.log(splits);
+                                // console.log(splits);
+                            }
                         }
                     }
-                }
+                });
             });
-        });
+        </script>
+    @endif
 
-        document.querySelector('.wrapper .sidebar .btn_publish').addEventListener('click', function(e) {
-            // console.log(e.target);
-
-            //     let formData = new FormData();
-            //     const title = document.querySelector('.content .title').textContent
-            //     const author = document.querySelector('.content .author').textContent;
-            //     const story = document.querySelector('.content .story').textContent;
-            //     const mediaMaterials = [];
-            //     document.querySelectorAll('.content .media .block_media').forEach(function(element) {
-            //         const media = {};
-            //         media.blockCount = element.dataset.block_media_count;
-            //         if (element.classList.contains('block_image')) {
-            //             media.mediaType = 'image';
-            //             media.mediaValue = element.querySelector('img').src;
-            //             media.mediaContent = element.querySelector('.image_content').textContent.trim();
-            //         } else if (element.classList.contains('block_video')) {
-            //             media.mediaType = 'video';
-            //             media.mediaValue = element.querySelector('.video').dataset.src;
-            //             media.mediaContent = element.querySelector('.video_content').textContent.trim();
-            //             media.mediaWebSite = element.querySelector('.video').dataset.video_website;
-            //         }
-            //         mediaMaterials.push(media);
-            //     });
-            //     const body = {};
-            //     body['title'] = title;
-            //     body['author'] = author;
-            //     body['story'] = story.trim();
-            //     body['mediaMaterials'] = mediaMaterials;
-            //     fetch('/', {
-            //         method: 'POST',
-            //         headers: {
-            //             'Content-Type': 'application/json',
-            //             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            //         },
-            //         body: JSON.stringify(body)
-            //     }).then(res => {
-            //         return res.json();
-            //     }).then(data => {
-            //         if (data.status == 'validate_error') {
-            //             if (document.querySelector('.wrapper .sidebar .errors')) {
-            //                 document.querySelector('.wrapper .sidebar .errors').remove();
-            //             }
-            //             document.querySelector('.wrapper .sidebar').insertAdjacentHTML('beforeend', `<div class="errors">${data.messages[0]}</div>`);
-            //             setTimeout(() => {
-            //                 document.querySelector('.wrapper .sidebar .errors').style.opacity = 0;
-            //             }, 2000);
-            //         } else if (data.status == true) {
-            //             window.location = `/${data.message.url}`;
-            //         }
-            //     })
-        })
-    </script>
 </body>
 
 </html>

@@ -78,7 +78,7 @@ class MainController extends Controller
             return response()->json(['status' => true, 'message' => $post]);
         } catch (\Exception $e) {
             DB::rollback();
-            return $request->json([$e->getMessage()]);
+            return response()->json([$e->getMessage()]);
         }
     }
     public function edit($url)
@@ -86,8 +86,12 @@ class MainController extends Controller
         $post = Post::where('url', $url)->first();
         // dd($post);
         if ($post) {
+            $isAuthor = false;
+            if (session('uuid_user') == $post->uuid || session('isAdmin') == true) {
+                $isAuthor = true;
+            }
             $post->media_materials = json_decode($post->media_materials);
-            return view('edit', ['post' => json_decode($post)]);
+            return view('edit', ['post' => json_decode($post), 'isAuthor' => $isAuthor]);
         }
         return view('errors.404');
     }
@@ -95,8 +99,12 @@ class MainController extends Controller
     {
         try {
             $post = Post::where('url', $url)->first();
+
             if (!$post) {
                 return response()->json(['status' => false, 'messages' => 'Url not found']);
+            }
+            if ($post->uuid != session('uuid_user') || session('isAdmin') != true) {
+                return response()->json(['status' => false]);
             }
             $rules = [
                 'title' => ['required', 'min:2'],
@@ -150,9 +158,9 @@ class MainController extends Controller
             DB::commit();
             $media_materials = json_decode($post->media_materials);
             foreach ($media_materials as $key => $media) {
-                if ($media['mediaType'] == 'image') {
-                    if (Storage::disk('local')->exists($media['mediaValue'])) {
-                        Storage::disk('local')->delete($media['mediaValue']);
+                if ($media->mediaType == 'image') {
+                    if (Storage::disk('local')->exists($media->mediaValue)) {
+                        Storage::disk('local')->delete($media->mediaValue);
                     }
                 }
             }
