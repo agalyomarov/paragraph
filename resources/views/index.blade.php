@@ -633,7 +633,6 @@
                     media.mediaContent = element.querySelector('.video_content').textContent.trim();
                     media.mediaWebSite = element.querySelector('.video').dataset.video_website;
                 }
-                console.log(media);
                 mediaMaterials.push(media);
             });
             const body = {};

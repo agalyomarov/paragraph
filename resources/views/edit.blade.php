@@ -542,7 +542,7 @@
                     const title = document.querySelector('.content .title').textContent;
                     const url = document.querySelector('.content .title').dataset.url;
                     const author = document.querySelector('.content .author').textContent;
-                    const story = document.querySelector('.content .story').textContent;
+                    const story = document.querySelector('.content .story').innerHTML;
                     const mediaMaterials = [];
                     document.querySelectorAll('.content .media .block_media').forEach(function(element) {
                         const media = {};
