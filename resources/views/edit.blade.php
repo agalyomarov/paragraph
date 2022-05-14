@@ -459,17 +459,17 @@
 <body>
     <div class="wrapper">
         <div class="content">
-            <div class="title hidden_after">{{ $post->title }}</div>
+            <div class="title hidden_after" data-url={{ $post->url }}>{{ $post->title }}</div>
             <div class="author {{ $post->author ? 'hidden_after' : '' }}">{{ $post->author }}</div>
             <div class="media" data-status="disabled">
                 @foreach ($post->media_materials as $media)
                     @if ($media->mediaType == 'image')
-                        <div class="block_media block_image" data-block_media_count="{{ $media->blockCount }}">
+                        <div class="block_media block_image" data-block_media_count="{{ $media->blockCount }}" data-image="url">
                             <div class="img">
                                 <img src="{{ $media->mediaValue }}" alt="">
                                 <span class="delete_block_image hidden">&#10005;</span>
                             </div>
-                            <div class="image_content">{{ $media->mediaContent }}</div>
+                            <div class="image_content {{ $media->mediaContent ? 'hidden_after' : '' }}">{{ $media->mediaContent }}</div>
                         </div>
                     @elseif($media->mediaType == 'video')
                         @if ($media->mediaWebSite == 'youtube')
@@ -478,7 +478,7 @@
                                     <iframe width="100%" height="300" src="{{ $media->mediaValue }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                                     <span class="delete_block_video hidden">&#10005;</span>
                                 </div>
-                                <div class="video_content">{{ $media->mediaContent }}</div>
+                                <div class="video_content {{ $media->mediaContent ? 'hidden_after' : '' }}">{{ $media->mediaContent }}</div>
                             </div>
                         @elseif($media->mediaWebSite == 'vimeo')
                             <div class="block_media block_video" data-block_media_count="{{ $media->blockCount }}">
@@ -486,7 +486,7 @@
                                     <iframe src="{{ $media->mediaValue }}" width="100%" height="300" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
                                     <span class="delete_block_video hidden">&#10005;</span>
                                 </div>
-                                <div class="video_content">{{ $media->mediaContent }}</div>
+                                <div class="video_content {{ $media->mediaContent ? 'hidden_after' : '' }}">{{ $media->mediaContent }}</div>
                             </div>
                         @elseif($media->mediaWebSite == 'rutube')
                             <div class="block_media block_video" data-block_media_count="{{ $media->blockCount }}">
@@ -494,7 +494,7 @@
                                     <iframe width="100%" height="300" src="{{ $media->mediaValue }}" frameborder="0" allow="clipboard-write" webkitAllowFullScreen mozallowfullscreen allowfullscreen></iframe>
                                     <span class="delete_block_video hidden">&#10005;</span>
                                 </div>
-                                <div class="video_content">{{ $media->mediaContent }}</div>
+                                <div class="video_content {{ $media->mediaContent ? 'hidden_after' : '' }}">{{ $media->mediaContent }}</div>
                             </div>
                         @endif
                     @endif
@@ -533,9 +533,63 @@
                     element.classList.remove('hidden');
                 });
                 content.querySelector('.btns').classList.remove('hidden');
+            } else if (e.target.dataset.status == 'enabled') {
+                let formData = new FormData();
+                const title = document.querySelector('.content .title').textContent;
+                const url = document.querySelector('.content .title').dataset.url;
+                const author = document.querySelector('.content .author').textContent;
+                const story = document.querySelector('.content .story').textContent;
+                const mediaMaterials = [];
+                document.querySelectorAll('.content .media .block_media').forEach(function(element) {
+                    const media = {};
+                    media.blockCount = element.dataset.block_media_count;
+                    if (element.classList.contains('block_image')) {
+                        media.mediaType = 'image';
+                        media.mediaValue = element.querySelector('img').src;
+                        media.mediaData = element.dataset.image;
+                        media.mediaContent = element.querySelector('.image_content').textContent.trim();
+                    } else if (element.classList.contains('block_video')) {
+                        media.mediaType = 'video';
+                        media.mediaValue = element.querySelector('.video').dataset.src;
+                        media.mediaContent = element.querySelector('.video_content').textContent.trim();
+                        media.mediaWebSite = element.querySelector('.video').dataset.video_website;
+                    }
+                    mediaMaterials.push(media);
+                });
+                const body = {};
+                body['title'] = title;
+                body['author'] = author;
+                body['story'] = story.trim();
+                body['mediaMaterials'] = mediaMaterials;
+                fetch(`/${url}`, {
+                    method: 'put',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify(body)
+                }).then(res => {
+                    return res.json();
+                }).then(data => {
+                    if (data.status == 'validate_error') {
+                        if (document.querySelector('.wrapper .sidebar .errors')) {
+                            document.querySelector('.wrapper .sidebar .errors').remove();
+                        }
+                        document.querySelector('.wrapper .sidebar').insertAdjacentHTML('beforeend', `<div class="errors">${data.messages[0]}</div>`);
+                        setTimeout(() => {
+                            document.querySelector('.wrapper .sidebar .errors').style.opacity = 0;
+                        }, 2000);
+                    } else if (data.status == true) {
+                        window.location.reload();
+                        // console.log(data);
+                    } else {
+                        window.location.reload();
+                        // window.location = `/${data.message.url}`;
+                        // console.log(data);
+                    }
+                })
             }
         })
-
         document.querySelector('.content .title').addEventListener('input', function(e) {
             e.target.classList.remove('hidden_after');
             if (e.target.textContent.length > 0) {
@@ -545,6 +599,7 @@
                 e.target.classList.add('hidden_after');
             }
         });
+
         document.querySelector('.content .author').addEventListener('input', function(e) {
             e.target.classList.remove('hidden_after');
             if (e.target.textContent.length > 0) {
@@ -554,6 +609,7 @@
                 e.target.classList.add('hidden_after');
             }
         });
+
 
         document.querySelector('.content .story').addEventListener('input', function(e) {
             e.target.classList.remove('hidden_after');
@@ -565,6 +621,8 @@
                 e.target.classList.add('hidden_after');
             }
         });
+
+
         document.querySelector('.content .btns .image').addEventListener('click', function(e) {
             const selectImage = document.querySelector('.content .btns input.select_image');
             selectImage.click();
@@ -582,7 +640,7 @@
             let reader = new FileReader();
             reader.onload = function() {
                 blockMedia.insertAdjacentHTML('beforeend', `
-            <div class="block_media block_image" data-block_media_count="${blockMediaCount}">
+            <div class="block_media block_image" data-block_media_count="${blockMediaCount}" data-image="base64">
                 <div class="img">
                     <img src="" alt="">
                     <span class="delete_block_image">&#10005;</span>
@@ -595,6 +653,8 @@
             };
             reader.readAsDataURL(input.files[0]);
         });
+
+
         document.querySelector('.content .media').addEventListener('click', function(e) {
             if (e.target.classList.contains('image_content') && this.dataset.status != 'disabled') {
                 e.target.classList.add('hidden_after');
@@ -614,115 +674,120 @@
                     }
                 })
             }
-            //     if (e.target.classList.contains('delete_block_image')) {
-            //         e.target.closest('.block_image').remove();
-            //     }
-            //     if (e.target.classList.contains('delete_block_video')) {
-            //         e.target.closest('.block_video').remove();
-            //     }
-            // })
-            // document.querySelector('.content .btns .link').addEventListener('click', function(e) {
-            //     const media_block = document.querySelector('.content .media');
-            //     if (!document.querySelector('.content .media .video_link')) {
-            //         media_block.insertAdjacentHTML('beforeend', `<input type="text" class="video_link" placeholder="Paste a YouTube, Vimeo or Rutube link, and press Enter">`);
-            //         document.querySelector('.content .media .video_link').focus();
-            //     }
-            //     const input_video_link = document.querySelector('.content .media .video_link');
-            //     input_video_link.addEventListener('keypress', function(event) {
-            //         const blockMediaCount = document.querySelectorAll('.content .media .block_media').length + 1;
-            //         if (event.key === 'Enter') {
-            //             if (event.target.value.trim().length == 0) {
-            //                 input_video_link.remove();
-            //             } else {
-            //                 const link_video = event.target.value.trim();
-            //                 if (link_video.includes('youtube')) {
-            //                     const splits = link_video.split("=");
-            //                     input_video_link.remove();
-            //                     media_block.insertAdjacentHTML('beforeend', `<div class="block_media block_video" data-block_media_count="${blockMediaCount}">
-        //                                       <div class="video" data-video_website="youtube" data-src="https://www.youtube.com/embed/${splits[1]}">
-        //                                           <iframe width="100%" height="300" src="https://www.youtube.com/embed/${splits[1]}"  frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        //                                           <span class="delete_block_video">&#10005;</span>
-        //                                       </div>
-        //                                       <div class="video_content" contenteditable="true">
-        //                                       </div>
-        //                                       </div>`);
-            //                 } else if (link_video.includes('vimeo')) {
-            //                     const splits = link_video.split("/");
-            //                     input_video_link.remove();
-            //                     media_block.insertAdjacentHTML('beforeend', `<div class="block_media block_video" data-block_media_count="${blockMediaCount}">
-        //                                       <div class="video" data-video_website="vimeo" data-src="https://player.vimeo.com/video/${splits[splits.length - 1]}">
-        //                                       <iframe src="https://player.vimeo.com/video/${splits[splits.length - 1]}" width="100%" height="300" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
-        //                                       <span class="delete_block_video">&#10005;</span>
-        //                                       </div>
-        //                                       <div class="video_content" contenteditable="true">
-        //                                       </div>
-        //                                       </div>`);
-            //                 } else if (link_video.includes('rutube')) {
-            //                     const splits = link_video.split("/");
-            //                     input_video_link.remove();
-            //                     media_block.insertAdjacentHTML('beforeend', `<div class="block_media block_video" data-block_media_count="${blockMediaCount}">
-        //                                       <div class="video" data-video_website="rutube" data-src="https://rutube.ru/pl/?pl_id&pl_type&pl_video=${splits[splits.length - 2]}">
-        //                                       <iframe width="100%" height="300" src="https://rutube.ru/pl/?pl_id&pl_type&pl_video=${splits[splits.length - 2]}" frameborder="0" allow="clipboard-write" webkitAllowFullScreen mozallowfullscreen allowfullscreen></iframe>
-        //                                       <span class="delete_block_video">&#10005;</span>
-        //                                      </div>
-        //                                       <div class="video_content" contenteditable="true">
-        //                                       </div>
-        //                                       </div>`);
-            //                     // console.log(splits);
-            //                 }
-            //             }
-            //         }
-            //     });
+            if (e.target.classList.contains('delete_block_image')) {
+                e.target.closest('.block_image').remove();
+            }
+            if (e.target.classList.contains('delete_block_video')) {
+                e.target.closest('.block_video').remove();
+            }
+        })
+
+
+        document.querySelector('.content .btns .link').addEventListener('click', function(event_event) {
+            const media_block = document.querySelector('.content .media');
+            if (!document.querySelector('.content .media .video_link')) {
+                media_block.insertAdjacentHTML('beforeend', `<input type="text" class="video_link" placeholder="Paste a YouTube, Vimeo or Rutube link, and press Enter">`);
+                document.querySelector('.content .media .video_link').focus();
+            }
+            const input_video_link = document.querySelector('.content .media .video_link');
+            input_video_link.addEventListener('keypress', function(event) {
+                const blockMediaCount = document.querySelectorAll('.content .media .block_media').length + 1;
+                if (event.key === 'Enter') {
+                    if (event.target.value.trim().length == 0) {
+                        input_video_link.remove();
+                    } else {
+                        const link_video = event.target.value.trim();
+                        if (link_video.includes('youtube')) {
+                            const splits = link_video.split("=");
+                            input_video_link.remove();
+                            media_block.insertAdjacentHTML('beforeend', `<div class="block_media block_video" data-block_media_count="${blockMediaCount}">
+                                              <div class="video" data-video_website="youtube" data-src="https://www.youtube.com/embed/${splits[1]}">
+                                                  <iframe width="100%" height="300" src="https://www.youtube.com/embed/${splits[1]}"  frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                                  <span class="delete_block_video">&#10005;</span>
+                                              </div>
+                                              <div class="video_content" contenteditable="true">
+                                              </div>
+                                              </div>`);
+                        } else if (link_video.includes('vimeo')) {
+                            const splits = link_video.split("/");
+                            input_video_link.remove();
+                            media_block.insertAdjacentHTML('beforeend', `<div class="block_media block_video" data-block_media_count="${blockMediaCount}">
+                                              <div class="video" data-video_website="vimeo" data-src="https://player.vimeo.com/video/${splits[splits.length - 1]}">
+                                              <iframe src="https://player.vimeo.com/video/${splits[splits.length - 1]}" width="100%" height="300" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                                              <span class="delete_block_video">&#10005;</span>
+                                              </div>
+                                              <div class="video_content" contenteditable="true">
+                                              </div>
+                                              </div>`);
+                        } else if (link_video.includes('rutube')) {
+                            const splits = link_video.split("/");
+                            input_video_link.remove();
+                            media_block.insertAdjacentHTML('beforeend', `<div class="block_media block_video" data-block_media_count="${blockMediaCount}">
+                                              <div class="video" data-video_website="rutube" data-src="https://rutube.ru/pl/?pl_id&pl_type&pl_video=${splits[splits.length - 2]}">
+                                              <iframe width="100%" height="300" src="https://rutube.ru/pl/?pl_id&pl_type&pl_video=${splits[splits.length - 2]}" frameborder="0" allow="clipboard-write" webkitAllowFullScreen mozallowfullscreen allowfullscreen></iframe>
+                                              <span class="delete_block_video">&#10005;</span>
+                                             </div>
+                                              <div class="video_content" contenteditable="true">
+                                              </div>
+                                              </div>`);
+                            // console.log(splits);
+                        }
+                    }
+                }
+            });
         });
-        // document.querySelector('.wrapper .sidebar .btn_publish').addEventListener('click', function(e) {
-        //     let formData = new FormData();
-        //     const title = document.querySelector('.content .title').textContent
-        //     const author = document.querySelector('.content .author').textContent;
-        //     const story = document.querySelector('.content .story').textContent;
-        //     const mediaMaterials = [];
-        //     document.querySelectorAll('.content .media .block_media').forEach(function(element) {
-        //         const media = {};
-        //         media.blockCount = element.dataset.block_media_count;
-        //         if (element.classList.contains('block_image')) {
-        //             media.mediaType = 'image';
-        //             media.mediaValue = element.querySelector('img').src;
-        //             media.mediaContent = element.querySelector('.image_content').textContent.trim();
-        //         } else if (element.classList.contains('block_video')) {
-        //             media.mediaType = 'video';
-        //             media.mediaValue = element.querySelector('.video').dataset.src;
-        //             media.mediaContent = element.querySelector('.video_content').textContent.trim();
-        //             media.mediaWebSite = element.querySelector('.video').dataset.video_website;
-        //         }
-        //         mediaMaterials.push(media);
-        //     });
-        //     const body = {};
-        //     body['title'] = title;
-        //     body['author'] = author;
-        //     body['story'] = story.trim();
-        //     body['mediaMaterials'] = mediaMaterials;
-        //     fetch('/', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json',
-        //             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        //         },
-        //         body: JSON.stringify(body)
-        //     }).then(res => {
-        //         return res.json();
-        //     }).then(data => {
-        //         if (data.status == 'validate_error') {
-        //             if (document.querySelector('.wrapper .sidebar .errors')) {
-        //                 document.querySelector('.wrapper .sidebar .errors').remove();
-        //             }
-        //             document.querySelector('.wrapper .sidebar').insertAdjacentHTML('beforeend', `<div class="errors">${data.messages[0]}</div>`);
-        //             setTimeout(() => {
-        //                 document.querySelector('.wrapper .sidebar .errors').style.opacity = 0;
-        //             }, 2000);
-        //         } else if (data.status == true) {
-        //             window.location = `/${data.message.url}`;
-        //         }
-        //     })
-        // })
+
+        document.querySelector('.wrapper .sidebar .btn_publish').addEventListener('click', function(e) {
+            // console.log(e.target);
+
+            //     let formData = new FormData();
+            //     const title = document.querySelector('.content .title').textContent
+            //     const author = document.querySelector('.content .author').textContent;
+            //     const story = document.querySelector('.content .story').textContent;
+            //     const mediaMaterials = [];
+            //     document.querySelectorAll('.content .media .block_media').forEach(function(element) {
+            //         const media = {};
+            //         media.blockCount = element.dataset.block_media_count;
+            //         if (element.classList.contains('block_image')) {
+            //             media.mediaType = 'image';
+            //             media.mediaValue = element.querySelector('img').src;
+            //             media.mediaContent = element.querySelector('.image_content').textContent.trim();
+            //         } else if (element.classList.contains('block_video')) {
+            //             media.mediaType = 'video';
+            //             media.mediaValue = element.querySelector('.video').dataset.src;
+            //             media.mediaContent = element.querySelector('.video_content').textContent.trim();
+            //             media.mediaWebSite = element.querySelector('.video').dataset.video_website;
+            //         }
+            //         mediaMaterials.push(media);
+            //     });
+            //     const body = {};
+            //     body['title'] = title;
+            //     body['author'] = author;
+            //     body['story'] = story.trim();
+            //     body['mediaMaterials'] = mediaMaterials;
+            //     fetch('/', {
+            //         method: 'POST',
+            //         headers: {
+            //             'Content-Type': 'application/json',
+            //             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            //         },
+            //         body: JSON.stringify(body)
+            //     }).then(res => {
+            //         return res.json();
+            //     }).then(data => {
+            //         if (data.status == 'validate_error') {
+            //             if (document.querySelector('.wrapper .sidebar .errors')) {
+            //                 document.querySelector('.wrapper .sidebar .errors').remove();
+            //             }
+            //             document.querySelector('.wrapper .sidebar').insertAdjacentHTML('beforeend', `<div class="errors">${data.messages[0]}</div>`);
+            //             setTimeout(() => {
+            //                 document.querySelector('.wrapper .sidebar .errors').style.opacity = 0;
+            //             }, 2000);
+            //         } else if (data.status == true) {
+            //             window.location = `/${data.message.url}`;
+            //         }
+            //     })
+        })
     </script>
 </body>
 
