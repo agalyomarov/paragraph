@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => env('FOR_ADMIN_URL'), 'as' => 'admin.', 'middleware' => 'admin'], function () {
    Route::get('/', [AdminMainController::class, 'index'])->name('index');
+   Route::post('/', [AdminMainController::class, 'search'])->name('search');
    Route::delete('/', [AdminMainController::class, 'delete'])->name('delete');
 });
 Route::post('/admin/auth', [AdminMainController::class, 'auth'])->name('admin.auth');
